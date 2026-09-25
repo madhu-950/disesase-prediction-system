@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Disease Prediction System</title>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f4f7fb;
+        color: #222;
+    }
+    .container {
+        max-width: 700px;
+        margin: 30px auto;
+        padding: 25px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    }
+    h1 {
+        text-align: center;
+        margin-bottom: 10px;
+        color: #1d4ed8;
+    }
+    .subtitle {
+        text-align: center;
+        color: #555;
+        margin-bottom: 25px;
+    }
+    .symptoms {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px;
+        margin: 20px 0;
+    }
+    .symptoms label {
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: #fafafa;
+        cursor: pointer;
+    }
+    .symptoms label:hover {
+        background: #eef4ff;
+    }
+    button {
+        width: 100%;
+        padding: 14px;
+        border: none;
+        border-radius: 8px;
+        background: #1d4ed8;
+        color: white;
+        font-size: 17px;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+    button:hover {
+        background: #153eaa;
+    }
+    #result {
+        display: none;
+        margin-top: 25px;
+        padding: 20px;
+        border-radius: 10px;
+        background: #f0f7ff;
+        border-left: 5px solid #1d4ed8;
+    }
+    .warning {
+        margin-top: 25px;
+        padding: 15px;
+        background: #fff7ed;
+        border-left: 5px solid #f97316;
+        border-radius: 8px;
+    }
+    ul { line-height: 1.7; }
+</style>
+</head>
+
+<body>
+<div class="container">
+    <h1>DISEASE PREDICTION SYSTEM</h1>
+    <p class="subtitle">Select your symptoms and click "Predict Disease".</p>
+
+    <div class="symptoms" id="symptomList"></div>
+
+    <button onclick="predictDisease()">Predict Disease</button>
+
+    <div id="result"></div>
+
+    <div class="warning">
+        <strong>IMPORTANT</strong>
+        <p>This system provides only a symptom-based prediction.</p>
+        <p>It is for educational purposes only and is NOT a medical diagnosis.</p>
+        <p>Always consult a qualified healthcare professional for proper diagnosis and treatment.</p>
+    </div>
+</div>
+
+<script>
+const diseases = {
+    "Common Cold": {
+        symptoms: ["cough", "runny nose", "cold", "sore throat"],
+        advice: [
+            "Take adequate rest.",
+            "Drink plenty of warm fluids.",
+            "Gargle with warm salt water if you have a sore throat.",
+            "Consult a doctor if symptoms last more than a few days."
+        ]
+    },
+    "Flu": {
+        symptoms: ["fever", "cough", "body pain", "headache", "fatigue"],
+        advice: [
+            "Take adequate rest.",
+            "Drink plenty of fluids.",
+            "Monitor your temperature.",
+            "Consult a doctor if symptoms become severe."
+        ]
+    },
+    "COVID-19": {
+        symptoms: ["fever", "cough", "loss of smell", "breathing difficulty"],
+        advice: [
+            "Wear a mask around others if appropriate.",
+            "Stay hydrated.",
+            "Seek medical advice promptly.",
+            "Get tested if recommended in your area."
+        ]
+    },
+    "Diabetes": {
+        symptoms: ["frequent urination", "excessive thirst", "weight loss", "fatigue"],
+        advice: [
+            "Arrange a blood sugar test.",
+            "Drink enough water.",
+            "Follow a balanced diet.",
+            "Consult a physician for evaluation."
+        ]
+    },
+    "High Blood Pressure": {
+        symptoms: ["headache", "dizziness", "blurred vision", "chest pain"],
+        advice: [
+            "Reduce salt intake.",
+            "Avoid smoking and excessive alcohol.",
+            "Monitor your blood pressure.",
+            "Consult a doctor promptly."
+        ]
+    },
+    "Low Blood Pressure": {
+        symptoms: ["dizziness", "weakness", "fainting"],
+        advice: [
+            "Drink enough fluids.",
+            "Stand up slowly.",
+            "Consult a doctor if symptoms continue."
+        ]
+    },
+    "Food Poisoning": {
+        symptoms: ["vomiting", "diarrhea", "stomach pain", "nausea"],
+        advice: [
+            "Drink oral rehydration solution (ORS) if available.",
+            "Stay hydrated.",
+            "Eat light foods after vomiting settles.",
+            "Consult a doctor if symptoms are severe or persistent."
+        ]
+    },
+    "Gastritis": {
+        symptoms: ["stomach pain", "acidity", "heartburn", "bloating"],
+        advice: [
+            "Avoid spicy and oily foods.",
+            "Eat small frequent meals.",
+            "Consult a doctor if symptoms persist."
+        ]
+    },
+    "Migraine": {
+        symptoms: ["headache", "nausea", "light sensitivity"],
+        advice: [
+            "Rest in a quiet, dark room.",
+            "Stay hydrated.",
+            "Consult a doctor if headaches are frequent."
+        ]
+    },
+    "Skin Allergy": {
+        symptoms: ["rash", "itching", "redness", "swelling"],
+        advice: [
+            "Avoid scratching the affected area.",
+            "Keep the skin clean.",
+            "Consult a dermatologist if symptoms worsen."
+        ]
+    },
+    "Asthma": {
+        symptoms: ["cough", "breathing difficulty", "wheezing"],
+        advice: [
+            "Avoid known triggers.",
+            "Seek medical care if breathing is difficult.",
+            "Follow your doctor's asthma management plan."
+        ]
+    }
+};
+
+const allSymptoms = [...new Set(
+    Object.values(diseases).flatMap(disease => disease.symptoms)
+)].sort();
+
+const symptomList = document.getElementById("symptomList");
+
+allSymptoms.forEach(symptom => {
+    const label = document.createElement("label");
+    const checkbox = document.createElement("input");
+
+    checkbox.type = "checkbox";
+    checkbox.value = symptom;
+
+    label.appendChild(checkbox);
+    label.appendChild(document.createTextNode(" " + symptom));
+
+    symptomList.appendChild(label);
+});
+
+function predictDisease() {
+    const selectedSymptoms = Array.from(
+        document.querySelectorAll('input[type="checkbox"]:checked')
+    ).map(checkbox => checkbox.value);
+
+    const result = document.getElementById("result");
+
+    if (selectedSymptoms.length === 0) {
+        result.style.display = "block";
+        result.innerHTML = `
+            <h2>No Symptoms Selected</h2>
+            <p>Please select at least one symptom.</p>
+        `;
+        return;
+    }
+
+    let bestDisease = "";
+    let bestMatch = 0;
+
+    for (const disease in diseases) {
+        let count = 0;
+
+        selectedSymptoms.forEach(symptom => {
+            if (diseases[disease].symptoms.includes(symptom)) {
+                count++;
+            }
+        });
+
+        if (count > bestMatch) {
+            bestMatch = count;
+            bestDisease = disease;
+        }
+    }
+
+    result.style.display = "block";
+
+    if (bestMatch > 0) {
+        const total = diseases[bestDisease].symptoms.length;
+        const confidence = Math.round((bestMatch / total) * 100);
+
+        const adviceList = diseases[bestDisease].advice
+            .map(tip => `<li>${tip}</li>`)
+            .join("");
+
+        const symptomListHTML = selectedSymptoms
+            .map(symptom => `<li>${symptom}</li>`)
+            .join("");
+
+        result.innerHTML = `
+            <h2>DISEASE PREDICTION RESULT</h2>
+
+            <h3>Entered Symptoms:</h3>
+            <ul>${symptomListHTML}</ul>
+
+            <h3>Predicted Disease: ${bestDisease}</h3>
+            <h3>Confidence Score: ${confidence}%</h3>
+
+            <h3>General Advice:</h3>
+            <ul>${adviceList}</ul>
+        `;
+    } else {
+        result.innerHTML = `
+            <h2>Disease could not be predicted.</h2>
+            <p>Please consult a qualified doctor.</p>
+        `;
+    }
+}
+</script>
+</body>
+</html>
